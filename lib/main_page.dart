@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_diary/add_page.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -27,6 +30,24 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
+  late Directory? directory;
+  String filePath = '';
+  @override
+  void initState() async {
+    // TODO: implement initState
+    super.initState();
+    getPath();
+  }
+
+  Future<void> getPath() async {
+    directory = await getApplicationSupportDirectory();
+    if (directory != null) {
+      var fileName = 'diary.json';
+      filePath = '${directory!.path}/$fileName'; // 경로/경로/diary.json
+      print(filePath);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
