@@ -30,8 +30,9 @@ class Main extends StatefulWidget {
 }
 
 class _MainState extends State<Main> {
-  late Directory? directory;
-  String filePath = '';
+  Directory? directory;
+  String filePath = 'msg.json';
+
   @override
   void initState() async {
     // TODO: implement initState
@@ -40,7 +41,7 @@ class _MainState extends State<Main> {
   }
 
   Future<void> getPath() async {
-    directory = await getApplicationSupportDirectory();
+    directory = await getApplicationSupportDirectory(); // 모든 플랫폼에서 사용 가능하기 때문에
     if (directory != null) {
       var fileName = 'diary.json';
       filePath = '${directory!.path}/$fileName'; // 경로/경로/diary.json

@@ -30,7 +30,7 @@ class _AddPageState extends State<AddPage> {
   Future<bool> fileSave() async {
     try {
       File file = File(filePath);
-      List<dynamic> dataList = [];
+      List<dynamic> dataList = []; // 기존의 파일데이터를 읽어와서 저장할 목적
       var data = {
         'title': controllers[0].text,
         'contents': controllers[1].text,
@@ -43,8 +43,8 @@ class _AddPageState extends State<AddPage> {
       }
       // 내가 방금 쓴 글을 추가해야함
       dataList.add(data);
-      var jsondata = jsonEncode(dataList);
-      await file.writeAsString(jsondata);
+      var jsondata = jsonEncode(dataList); // 변수 map을 다시 json으로 변환
+      var res = await file.writeAsString(jsondata);
       return true;
     } catch (e) {
       print(e);
@@ -86,13 +86,12 @@ class _AddPageState extends State<AddPage> {
                 ),
               ),
               ElevatedButton(
-                onPressed: () {
-                  var title = controllers[0].text;
-                  var result = fileSave(); // 저장이 잘 되었다면 T, 안되었다면 F
+                onPressed: () async {
+                  var result = await fileSave(); // 저장이 잘 되었다면 T, 안되었다면 F
                   if (result == true) {
                     Navigator.pop(context, 'ok');
                   } else {
-                    print('저장실패');
+                    print('저장실패입니다.');
                   }
                 },
                 child: const Text('저장'),
