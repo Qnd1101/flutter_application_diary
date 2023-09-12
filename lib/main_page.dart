@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -31,40 +32,92 @@ class Main extends StatefulWidget {
 
 class _MainState extends State<Main> {
   Directory? directory;
-  String filePath = 'msg.json';
+  String fileName = 'diary.json';
+  String filePath = '';
+  dynamic myList = const Text('준비');
 
   @override
-  void initState() async {
+  void initState() {
     // TODO: implement initState
     super.initState();
-    getPath();
+    getPath().then((value) => {showList()});
   }
 
   Future<void> getPath() async {
     directory = await getApplicationSupportDirectory(); // 모든 플랫폼에서 사용 가능하기 때문에
     if (directory != null) {
-      var fileName = 'diary.json';
       filePath = '${directory!.path}/$fileName'; // 경로/경로/diary.json
       print(filePath);
+    }
+  }
+
+  Future<void> showList() async {
+    try {
+      var file = File(filePath);
+      if (file.existsSync()) {
+        setState(() {
+          myList = FutureBuilder(
+            future: file.readAsString(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                var d = snapshot.data; // String - [{'title' : 'asd'}....]
+                var dataList = jsonDecode(d!) as List<dynamic>;
+                return ListView.separated(
+                  itemBuilder: (context, index) {
+                    var data = dataList[index] as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(data['title']),
+                      subtitle: Text(data['contents']),
+                      trailing: const Icon(Icons.delete),
+                    );
+                  },
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemCount: dataList.length,
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
+            },
+          );
+        });
+      }
+    } catch (e) {
+      print(e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: const Text('hello'),
+      body: Center(
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 60,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                showList();
+              },
+              child: const Text('조회'),
+            ),
+            Expanded(
+              child: myList,
+            )
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           var result = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => AddPage(
-                filePath: 'temp',
+                filePath: filePath,
               ),
             ),
           );
-
-          print(result);
+          if (result == 'ok') {}
         },
         child: const Icon(Icons.pest_control_outlined),
       ),
