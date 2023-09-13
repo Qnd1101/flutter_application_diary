@@ -40,7 +40,9 @@ class _MainState extends State<Main> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    getPath().then((value) => {showList()});
+    getPath().then((value) {
+      showList();
+    });
   }
 
   Future<void> getPath() async {
@@ -48,6 +50,40 @@ class _MainState extends State<Main> {
     if (directory != null) {
       filePath = '${directory!.path}/$fileName'; // 경로/경로/diary.json
       print(filePath);
+    }
+  }
+
+  Future<void> deleteFile() async {
+    try {
+      var file = File(filePath);
+      var result = file.delete().then((value) {
+        print(value);
+        showList();
+      });
+      print(result);
+    } catch (e) {
+      print('delete error');
+    }
+  }
+
+  deleteContents(int index) async {
+    try {
+      // 파일을 불러옴 -> 그것을 [{},{}] -> jsondecode를 해서 List<map>으로 변환
+      var file = File(filePath);
+      var fileContents = await file.readAsString();
+      List<dynamic> dataList = jsonDecode(fileContents) as List<dynamic>;
+
+      // List니까 배열 조작   원하는 index번지 삭제하기
+      dataList.removeAt(index);
+
+      // List<map<dynamic>> 을 jsonencode (String으로 변경) => 다시 파일에 쓰기
+      var jsondata = jsonEncode(dataList);
+      await file.writeAsString(jsondata).then((value) {
+        // showList()
+        showList();
+      });
+    } catch (e) {
+      print('삭제 정보 오류');
     }
   }
 
@@ -68,7 +104,12 @@ class _MainState extends State<Main> {
                     return ListTile(
                       title: Text(data['title']),
                       subtitle: Text(data['contents']),
-                      trailing: const Icon(Icons.delete),
+                      trailing: IconButton(
+                        onPressed: () {
+                          deleteContents(index);
+                        },
+                        icon: const Icon(Icons.delete),
+                      ),
                     );
                   },
                   separatorBuilder: (context, index) => const Divider(),
@@ -79,6 +120,10 @@ class _MainState extends State<Main> {
               }
             },
           );
+        });
+      } else {
+        setState(() {
+          myList = const Text('파일 존재 X');
         });
       }
     } catch (e) {
@@ -95,15 +140,26 @@ class _MainState extends State<Main> {
             const SizedBox(
               height: 60,
             ),
-            ElevatedButton(
-              onPressed: () {
-                showList();
-              },
-              child: const Text('조회'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    ListView;
+                  },
+                  child: const Text('조회'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    deleteFile();
+                  },
+                  child: const Text('삭제'),
+                )
+              ],
             ),
             Expanded(
               child: myList,
-            )
+            ),
           ],
         ),
       ),
@@ -117,7 +173,9 @@ class _MainState extends State<Main> {
               ),
             ),
           );
-          if (result == 'ok') {}
+          if (result == 'ok') {
+            showList();
+          }
         },
         child: const Icon(Icons.pest_control_outlined),
       ),

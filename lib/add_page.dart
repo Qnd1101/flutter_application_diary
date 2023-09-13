@@ -44,7 +44,7 @@ class _AddPageState extends State<AddPage> {
       // 내가 방금 쓴 글을 추가해야함
       dataList.add(data);
       var jsondata = jsonEncode(dataList); // 변수 map을 다시 json으로 변환
-      var res = await file.writeAsString(jsondata);
+      await file.writeAsString(jsondata);
       return true;
     } catch (e) {
       print(e);
