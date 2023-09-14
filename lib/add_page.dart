@@ -1,62 +1,27 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-
 class AddPage extends StatefulWidget {
-  String filePath;
-  AddPage({super.key, required this.filePath});
+  final Directory? directory; // 변경: directory 정보를 받도록 수정
+  const AddPage({super.key, this.directory});
 
   @override
   State<AddPage> createState() => _AddPageState();
 }
 
 class _AddPageState extends State<AddPage> {
-  // var controller1 = TextEditingController();
-  // var controller2 = TextEditingController();
-  String filePath = '';
   List<TextEditingController> controllers = [
     TextEditingController(),
     TextEditingController(),
   ];
 
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    filePath = widget.filePath;
-  }
-
-  Future<bool> fileSave() async {
-    try {
-      File file = File(filePath);
-      List<dynamic> dataList = []; // 기존의 파일데이터를 읽어와서 저장할 목적
-      var data = {
-        'title': controllers[0].text,
-        'contents': controllers[1].text,
-      };
-
-      // 기존에 파일이 있는 경우
-      if (file.existsSync()) {
-        var fileContents = await file.readAsString();
-        dataList = jsonDecode(fileContents) as List<dynamic>;
-      }
-      // 내가 방금 쓴 글을 추가해야함
-      dataList.add(data);
-      var jsondata = jsonEncode(dataList); // 변수 map을 다시 json으로 변환
-      await file.writeAsString(jsondata);
-      return true;
-    } catch (e) {
-      print(e);
-      return false;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(filePath),
+        title: const Text('일기 작성'),
         centerTitle: true,
       ),
       body: Form(
@@ -66,13 +31,9 @@ class _AddPageState extends State<AddPage> {
             children: [
               TextFormField(
                 controller: controllers[0],
-                inputFormatters: <TextInputFormatter>[
-        FilteringTextInputFormatter.allow(RegExp(r'[a-z|A-Z|0-9|ㄱ-ㅎ|ㅏ-ㅣ|가-힣|ᆞ|ᆢ|ㆍ|ᆢ|ᄀᆞ|ᄂᆞ|ᄃᆞ|ᄅᆞ|ᄆᆞ|ᄇᆞ|ᄉᆞ|ᄋᆞ|ᄌᆞ|ᄎᆞ|ᄏᆞ|ᄐᆞ|ᄑᆞ|ᄒᆞ]'));
-        
-    ],
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  label: Text('제목'),
+                  labelText: '제목', // label을 labelText로 수정
                 ),
               ),
               const SizedBox(
@@ -85,7 +46,7 @@ class _AddPageState extends State<AddPage> {
                   maxLines: 10,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    label: Text('내용'),
+                    labelText: '내용', // label을 labelText로 수정
                   ),
                 ),
               ),
@@ -95,15 +56,54 @@ class _AddPageState extends State<AddPage> {
                   if (result == true) {
                     Navigator.pop(context, 'ok');
                   } else {
-                    print('저장실패입니다.');
+                    print('저장 실패입니다.');
                   }
                 },
                 child: const Text('저장'),
-              )
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<bool> fileSave() async {
+    try {
+      File file = await getDiaryFile(); // 파일 이름을 생성하는 함수 호출
+      List<dynamic> dataList = [];
+
+      var data = {
+        'date': DateFormat('yyyy-MM-dd')
+            .format(DateTime.now()), // DateFormat을 사용하려면 import 필요
+        'title': controllers[0].text,
+        'contents': controllers[1].text,
+      };
+
+      if (file.existsSync()) {
+        var fileContents = await file.readAsString();
+        dataList = jsonDecode(fileContents) as List<dynamic>;
+      }
+
+      dataList.add(data);
+      var jsondata = jsonEncode(dataList);
+      await file.writeAsString(jsondata);
+
+      return true;
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+
+  Future<File> getDiaryFile() async {
+    if (widget.directory != null) {
+      String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      String fileName = 'diary_$date.json';
+      String filePath = '${widget.directory!.path}/$fileName';
+      return File(filePath);
+    } else {
+      throw Exception('Directory is null');
+    }
   }
 }
